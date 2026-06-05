@@ -9,12 +9,14 @@ interface InputProps {
 	required: boolean
 	value: string
 	classNames?: string[]
+	name: string
 	onChange: (e: ChangeEvent<HTMLInputElement>) => void
 }
 
 export const Input: FC<InputProps> = ({
 	label,
 	type,
+	name,
 	id,
 	placeholder,
 	required,
@@ -26,6 +28,7 @@ export const Input: FC<InputProps> = ({
 		<div className='flex flex-col gap-3'>
 			<label htmlFor={id}>{label}</label>
 			<input
+				name={name}
 				placeholder={placeholder}
 				required={required}
 				type={type}

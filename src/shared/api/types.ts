@@ -5,4 +5,3 @@ type TServerResponse<T> = {
 export type TResponseWithData<T> = TServerResponse<{
 	data: T
 }>
-

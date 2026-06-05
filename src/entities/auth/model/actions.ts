@@ -8,6 +8,8 @@ import type {
 	TAuthLoginRequest,
 } from '../types'
 
+
+
 const api = new Api(AUTH_URI)
 const authApi = new AuthApi(api)
 

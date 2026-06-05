@@ -26,6 +26,12 @@ export const authSlice = createSlice({
 		setIsAuthChecked: (state, action) => {
 			state.isAuthChecked = action.payload
 		},
+		clearAll: state => {
+			state.isAuthChecked = true
+			state.isResponse = false
+			state.error = ''
+			state.user = null
+		},
 	},
 	extraReducers: builder => {
 		builder

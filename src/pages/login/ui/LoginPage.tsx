@@ -28,6 +28,15 @@ export const LoginPage = () => {
 		dispatch(login(loginFormData))
 	}
 
+	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target
+
+		setFormData(prev => ({
+			...prev,
+			[name]: value,
+		}))
+	}
+
 	return (
 		<>
 			<UnAuthLayout>
@@ -42,9 +51,8 @@ export const LoginPage = () => {
 							className='flex flex-col gap-3'
 						>
 							<Input
-								onChange={(e: ChangeEvent<HTMLInputElement>) =>
-									setFormData(prev => ({ ...prev, login: e.target.value }))
-								}
+								name='login'
+								onChange={handleChange}
 								id='login'
 								type='text'
 								required
@@ -54,9 +62,8 @@ export const LoginPage = () => {
 								classNames={['px-3 py-2 border-2 rounded-full border-blue-400']}
 							/>
 							<Input
-								onChange={(e: ChangeEvent<HTMLInputElement>) =>
-									setFormData(prev => ({ ...prev, password: e.target.value }))
-								}
+								name='password'
+								onChange={handleChange}
 								id='password'
 								type='password'
 								required

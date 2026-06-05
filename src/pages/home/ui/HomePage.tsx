@@ -21,7 +21,7 @@ export const Home = () => {
 					<ul className='flex flex-col gap-3'>
 						{homeMenuConfig.map(item => {
 							return (
-								<li>
+								<li key={item.id}>
 									<Button
 										type='Link'
 										key={item.name}

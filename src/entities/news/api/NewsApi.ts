@@ -28,12 +28,9 @@ export class NewsApi {
 
 	async delete(id: string) {
 		const endpoint = `/${id}`
-		const token = localStorage.getItem('accessToken') as string
-		return await this.apiService.delete<boolean>(endpoint, {
-			headers: {
-				Authorization: token,
-			},
-		})
+		return await this.apiService.fetchWithRefresh(() =>
+			this.apiService.delete<boolean>(endpoint),
+		)
 	}
 
 	async getOfPagination(params: TNewsPaginationParams) {
@@ -43,7 +40,7 @@ export class NewsApi {
 			{ ...params },
 			{
 				headers: {
-					Authorization: token,
+					Authorization: `Bearer ${token}`,
 				},
 			},
 		)

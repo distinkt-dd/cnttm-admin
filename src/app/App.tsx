@@ -1,7 +1,7 @@
 import { getUser } from '@entities/auth'
 import { getOfPagination, selectedNewsNews } from '@entities/news'
 import { Home, LoginPage, ProfilePage } from '@pages'
-import { NewsPage } from '@pages/news'
+import { NewsCreatePage, NewsPage } from '@pages/news'
 import { useDispatch, useSelector } from '@shared/store'
 import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
@@ -44,6 +44,14 @@ export const App = () => {
 				element={
 					<ProtectedRoute>
 						<NewsPage />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path='/news/create'
+				element={
+					<ProtectedRoute>
+						<NewsCreatePage />
 					</ProtectedRoute>
 				}
 			/>

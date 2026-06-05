@@ -5,8 +5,8 @@ type TNewsContentOptions = {
 	urls?: string
 }
 
-type TNewsContent = {
-	type: 'PARAGRAPH' | 'IMAGES' | 'VIDEOS'
+export type TNewsContent = {
+	type: 'PARAGRAPH' | 'IMAGES' | 'VIDEOS' | 'DOCS'
 	onStep: number
 	options: TNewsContentOptions
 }
@@ -20,11 +20,12 @@ export type TNews = {
 	updatedAt: string
 }
 
+export type TNewsCreate = Pick<TNews, 'title' | 'content'>
+
 export type TNewsPaginationParams = {
 	page?: number
 	limit?: number
 }
-
 
 export type TNewsPaginationInfo = {
 	total: number

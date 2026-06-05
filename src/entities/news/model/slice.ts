@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { LIMIT_NEWS } from '@shared/api/constants'
 import type { TNews } from '../types'
-import { getOfPagination } from './actions'
+import { deleteThunk, getOfPagination } from './actions'
 
 type TInitialStateNewsSlice = {
 	news: TNews[] | null
@@ -28,7 +28,13 @@ const initialState: TInitialStateNewsSlice = {
 export const newsSlice = createSlice({
 	name: 'news',
 	initialState,
-	reducers: {},
+	reducers: {
+		setNews: (state, action: PayloadAction<TNews[]>) => {
+			state.news = action.payload
+			state.total = state.news?.length as number
+			state.totalPages = Math.ceil(state.total / state.limit)
+		},
+	},
 	selectors: {
 		selectedNewsNews: state => state.news,
 		selectedNewsNewNews: state => state.newNews,
@@ -37,6 +43,7 @@ export const newsSlice = createSlice({
 		selectedNewsTotalPages: state => state.totalPages,
 		selectedNewsTotal: state => state.total,
 		selectedNewsIsResponse: state => state.isResponse,
+		selectedNewsErrors: state => state.error,
 	},
 	extraReducers: builder => {
 		builder
@@ -56,6 +63,18 @@ export const newsSlice = createSlice({
 				state.isResponse = true
 				state.error = ''
 			})
+			.addCase(deleteThunk.pending, state => {
+				state.isResponse = true
+				state.error = ''
+			})
+			.addCase(deleteThunk.fulfilled, state => {
+				state.isResponse = false
+				state.error = ''
+			})
+			.addCase(deleteThunk.rejected, (state, action) => {
+				state.isResponse = false
+				state.error = action.error.message as string
+			})
 	},
 })
 
@@ -67,4 +86,7 @@ export const {
 	selectedNewsPage,
 	selectedNewsTotal,
 	selectedNewsTotalPages,
+	selectedNewsErrors,
 } = newsSlice.selectors
+
+export const { setNews } = newsSlice.actions

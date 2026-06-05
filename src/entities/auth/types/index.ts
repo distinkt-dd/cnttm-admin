@@ -11,6 +11,10 @@ export type TAuthData = TResponseWithData<{
 	accessToken: string
 }>
 
+export type TAuthAccessOnly = TResponseWithData<{
+	accessToken: string
+}>
+
 export type TAuthLoginRequest = {
 	login: string
 	password: string
