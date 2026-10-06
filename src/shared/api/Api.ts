@@ -124,21 +124,32 @@ export class Api {
 		yourLink?: string,
 	): Promise<T> {
 		const token = localStorage.getItem('accessToken')
+
+		const isFormData = data instanceof FormData
+		const body = isFormData ? data : JSON.stringify(data)
+
+		const mergedOptions = this.mergeOptions(options)
+		const headers = { ...mergedOptions.headers } as Record<string, string>
+
+		if (isFormData) {
+			delete headers['Content-Type']
+		}
+
 		return fetch(
 			yourLink
 				? this.baseUrl + yourLink + localUri
 				: this.baseUrl + this.uri + localUri,
 			{
-				...this.mergeOptions(options),
+				...mergedOptions,
 				method,
 				credentials: 'include',
-				body: JSON.stringify(data),
+				body, // Используем обработанный body
 				headers: {
-					...this.mergeOptions(options).headers,
+					...headers,
 					Authorization: `Bearer ${token}`,
 				},
 			},
-		).then(this.checkResponse<T>)
+		).then(this.checkResponse<T>) // Теперь ошибки 400 будут лететь в catch!
 	}
 
 	put<T extends object, K>(

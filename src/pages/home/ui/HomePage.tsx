@@ -2,7 +2,7 @@ import { selectedAuthUser } from '@entities/auth'
 import { AuthLayout, UnAuthLayout } from '@pages'
 import { useSelector } from '@shared/store'
 import { Button } from '@shared/ui'
-import { homeMenuConfig } from '../config'
+import { getMenuForRole, homeMenuConfig } from '../config'
 
 export const Home = () => {
 	const user = useSelector(selectedAuthUser)
@@ -19,22 +19,20 @@ export const Home = () => {
 				<div className='flex flex-col text-4xl min-h-full font-semibold text-blue-400 mb-auto gap-3'>
 					<h2>Меню действий</h2>
 					<ul className='flex flex-col gap-3'>
-						{homeMenuConfig.map(item => {
-							return (
-								<li key={item.id}>
-									<Button
-										type='Link'
-										key={item.name}
-										path={item.to}
-										typeForHtml='button'
-										text={item.name}
-										classNames={[
-											'w-full hover:bg-blue-400 hover:text-white transition-all',
-										]}
-									/>
-								</li>
-							)
-						})}
+						{getMenuForRole(user.role).map(item => (
+							<li key={item.id}>
+								<Button
+									type='Link'
+									key={item.name}
+									path={item.to}
+									typeForHtml='button'
+									text={item.name}
+									classNames={[
+										'w-full hover:bg-blue-400 hover:text-white transition-all',
+									]}
+								/>
+							</li>
+						))}
 					</ul>
 				</div>
 			</div>
@@ -47,7 +45,7 @@ export const Home = () => {
 				</h1>
 				<p className='text-2xl'>Вы в центре управления сайтом ЦНТТМ</p>
 				<p>Необходимо авторизоваться</p>
-				<div className='max-w-[150px] w-full'>
+				<div className='max-w-37.5 w-full'>
 					<Button
 						typeForHtml='button'
 						classNames={['w-full']}

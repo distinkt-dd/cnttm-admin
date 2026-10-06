@@ -1,7 +1,6 @@
 import {
 	login,
 	selectedAuthError,
-	selectedAuthUser,
 	type TAuthLoginRequest,
 } from '@entities/auth'
 import { UnAuthLayout } from '@pages'
@@ -17,8 +16,6 @@ const initialState: TAuthLoginRequest = {
 
 export const LoginPage = () => {
 	const dispatch = useDispatch()
-
-	const user = useSelector(selectedAuthUser)
 	const error = useSelector(selectedAuthError)
 
 	const [loginFormData, setFormData] = useState<TAuthLoginRequest>(initialState)
@@ -74,6 +71,7 @@ export const LoginPage = () => {
 							/>
 							<Button type='Button' text='Войти' typeForHtml='submit' />
 						</form>
+						{error ? <p className='text-red-400'>{error}</p> : ''}
 					</div>
 				</div>
 			</UnAuthLayout>

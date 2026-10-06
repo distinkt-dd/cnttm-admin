@@ -1,6 +1,8 @@
 import {
-	create,
+	getNewsById,
+	selectedNewsCurrent,
 	selectedNewsErrors,
+	updateNews,
 	uploadFiles,
 	type TNewsContent,
 	type TNewsRequest,
@@ -8,13 +10,11 @@ import {
 import { AuthLayout } from '@pages/layouts'
 import { useDispatch, useSelector } from '@shared/store'
 import { Button, Input } from '@shared/ui'
-import { useState, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type ChangeEvent } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
-// 1. Создаем расширенный тип для внутреннего использования в форме
 type TInternalNewsContent = TNewsContent & { id: string }
 
-// 2. Создаем тип для состояния формы, где контент имеет ID
 type TNewsFormState = {
 	title: string
 	content: TInternalNewsContent[]
@@ -30,20 +30,51 @@ const initialState: TNewsFormState = {
 	content: [],
 }
 
-export const NewsCreatePage = () => {
+export const NewsUpdatePage = () => {
+	const { news_id } = useParams<{ news_id: string }>()
 	const dispatch = useDispatch()
 	const error = useSelector(selectedNewsErrors)
+	const currentNews = useSelector(selectedNewsCurrent)
 	const navigation = useNavigate()
 
-	// Используем наш локальный тип состояния формы
 	const [formData, setFormData] = useState<TNewsFormState>(initialState)
 	const [editingIdx, setEditingIdx] = useState<number | null>(null)
 	const [attachedFiles, setAttachedFiles] = useState<TAttachedFile[]>([])
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [isLoading, setIsLoading] = useState(true) // Состояние загрузки данных
 
 	const classNames = [
 		'px-3 py-2 border-2 rounded-full border-blue-400 max-w-[500px]',
 	]
+
+	// --- ЗАГРУЗКА ДАННЫХ НОВОСТИ ---
+	useEffect(() => {
+		const fetchNews = async () => {
+			try {
+				setIsLoading(true)
+				// Получаем данные новости через thunk
+				const newsData = (await dispatch(getNewsById(news_id!)).unwrap()).data
+
+				// Трансформируем серверный контент во внутренний (добавляем UUID)
+				const internalContent = newsData.content.map((item: TNewsContent) => ({
+					...item,
+					id: crypto.randomUUID(),
+				}))
+
+				setFormData({
+					title: newsData.title,
+					content: internalContent,
+				})
+			} catch (err) {
+				alert('Не удалось загрузить новость')
+				navigation('/news')
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		if (news_id) fetchNews()
+	}, [news_id, dispatch, navigation])
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target
@@ -64,39 +95,19 @@ export const NewsCreatePage = () => {
 		setEditingIdx(formData.content.length)
 	}
 
-	const handleContentListChange = (idx: number, value: string) => {
-		const list = value.split('\n')
-
-		setFormData(prev => ({
-			...prev,
-			content: prev.content.map((item, index) =>
-				index === idx
-					? { ...item, options: { ...item.options, listItems: list } }
-					: item,
-			),
-		}))
-		setEditingIdx(idx)
-	}
-
 	const moveContent = (idx: number, direction: 'up' | 'down') => {
-		if (editingIdx !== null) {
-			return false
-		}
-
+		if (editingIdx !== null) return
 		const newContent = [...formData.content]
 		const targetIdx = direction === 'up' ? idx - 1 : idx + 1
-
 		if (targetIdx < 0 || targetIdx >= newContent.length) return
 		;[newContent[idx], newContent[targetIdx]] = [
 			newContent[targetIdx],
 			newContent[idx],
 		]
-
 		const updatedContent = newContent.map((item, index) => ({
 			...item,
 			onStep: index + 1,
 		}))
-
 		setFormData(prev => ({ ...prev, content: updatedContent }))
 	}
 
@@ -118,16 +129,12 @@ export const NewsCreatePage = () => {
 	) => {
 		const files = e.target.files
 		if (!files) return
-
-		const contentId = formData.content[idx].id // Теперь TS знает, что id существует
-
+		const contentId = formData.content[idx].id
 		const newFilesForStep: TAttachedFile[] = Array.from(files).map(file => ({
 			contentId: contentId,
 			file: file,
 		}))
-
 		const fileNames = newFilesForStep.map(item => item.file.name).join(', ')
-
 		setFormData(prev => ({
 			...prev,
 			content: prev.content.map((item, index) =>
@@ -136,7 +143,6 @@ export const NewsCreatePage = () => {
 					: item,
 			),
 		}))
-
 		setAttachedFiles(prev => {
 			const filteredFiles = prev.filter(f => f.contentId !== contentId)
 			return [...filteredFiles, ...newFilesForStep]
@@ -147,7 +153,6 @@ export const NewsCreatePage = () => {
 	const handleDeleteContent = (idx: number) => {
 		const contentId = formData.content[idx].id
 		setAttachedFiles(prev => prev.filter(f => f.contentId !== contentId))
-
 		setFormData(prev => ({
 			...prev,
 			content: prev.content.filter((_, i) => i !== idx),
@@ -155,25 +160,27 @@ export const NewsCreatePage = () => {
 		if (editingIdx === idx) setEditingIdx(null)
 	}
 
-	const handleSaveContent = () => setEditingIdx(null)
-	const handleContentUrlChange = (idx: number, value: string) => {
+	const handleContentListChange = (idx: number, value: string) => {
+		const list = value.split('\n')
+
 		setFormData(prev => ({
 			...prev,
 			content: prev.content.map((item, index) =>
 				index === idx
-					? { ...item, options: { ...item.options, url: value } }
+					? { ...item, options: { ...item.options, listItems: list } }
 					: item,
 			),
 		}))
 		setEditingIdx(idx)
 	}
 
+	const handleSaveContent = () => setEditingIdx(null)
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setIsSubmitting(true)
 
 		try {
-			// Типизируем как внутренний контент
 			let finalContent: TInternalNewsContent[] = [...formData.content]
 
 			if (attachedFiles.length > 0) {
@@ -184,7 +191,6 @@ export const NewsCreatePage = () => {
 
 				uploadResponse.forEach((fileInfo: any, index: number) => {
 					const contentIdOfFile = attachedFiles[index].contentId
-
 					finalContent = finalContent.map(item => {
 						if (item.id === contentIdOfFile) {
 							return {
@@ -201,41 +207,58 @@ export const NewsCreatePage = () => {
 			}
 
 			const cleanedContent = finalContent.map(({ id, ...rest }) => {
-				if (rest.type === 'LISTS' && rest.options.listItems) {
-					return {
-						...rest,
-						options: {
-							...rest.options,
-							listItems: rest.options.listItems.filter(
-								item => item.trim() !== '',
-							),
-						},
-					}
-				}
-				return rest
-			})
+            if (rest.type === 'LISTS' && rest.options.listItems) {
+                return {
+                    ...rest,
+                    options: {
+                        ...rest.options,
+                        listItems: rest.options.listItems.filter(item => item.trim() !== '')
+                    }
+                };
+            }
+            return rest;
+        });
 
 			const finalRequest: TNewsRequest = {
 				title: formData.title,
 				content: cleanedContent,
 			}
 
-			await dispatch(create(finalRequest)).unwrap()
-			alert('Новость успешно создана!')
+			await dispatch(updateNews({ id: news_id!, ...finalRequest })).unwrap()
+			alert('Новость успешно обновлена!')
 			navigation('/news')
 		} catch (error: any) {
-			console.error('Ошибка при создании новости:', error)
-			alert(`Ошибка: ${error.message || 'Не удалось создать новость'}`)
+			alert(`Ошибка: ${error.message || 'Не удалось обновить новость'}`)
 		} finally {
 			setIsSubmitting(false)
 		}
+	}
+
+	const handleContentUrlChange = (idx: number, value: string) => {
+		setFormData(prev => ({
+			...prev,
+			content: prev.content.map((item, index) =>
+				index === idx
+					? { ...item, options: { ...item.options, url: value } }
+					: item,
+			),
+		}))
+		setEditingIdx(idx)
+	}
+
+	if (!currentNews) {
+		return (
+			<AuthLayout>
+				<div className='flex justify-center p-10'>Загрузка новости...</div>
+			</AuthLayout>
+		)
 	}
 
 	return (
 		<AuthLayout>
 			<div className='mb-auto flex flex-col gap-10'>
 				<div className='flex justify-between items-center'>
-					<h1 className='text-5xl font-semibold'>Создание новости</h1>
+					<h1 className='text-5xl font-semibold'>Редактирование новости</h1>
 					<Button
 						classNames={[
 							'text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white',
@@ -258,9 +281,7 @@ export const NewsCreatePage = () => {
 						placeholder='Введите заголовок новости'
 						classNames={classNames}
 					/>
-					<h2 className='font-semibold text-2xl'>
-						Добавление контента к новости
-					</h2>
+					<h2 className='font-semibold text-2xl'>Редактирование контента</h2>
 					<div className='flex flex-col gap-4'>
 						{formData.content.length === 0 ? (
 							<p>Контента для новости нет!</p>
@@ -281,7 +302,7 @@ export const NewsCreatePage = () => {
 												typeForHtml='button'
 												classNames={['text-xs w-8 h-8 p-0 border-gray-300']}
 												onClick={() => moveContent(idx, 'up')}
-												disabled={idx === 0 && editingIdx === null}
+												disabled={idx === 0}
 											/>
 											<Button
 												text='↓'
@@ -289,10 +310,7 @@ export const NewsCreatePage = () => {
 												typeForHtml='button'
 												classNames={['text-xs w-8 h-8 p-0 border-gray-300']}
 												onClick={() => moveContent(idx, 'down')}
-												disabled={
-													idx === formData.content.length - 1 &&
-													editingIdx === null
-												}
+												disabled={idx === formData.content.length - 1}
 											/>
 										</div>
 									</div>
@@ -301,7 +319,7 @@ export const NewsCreatePage = () => {
 										<Input
 											id={`content-p-` + item.id}
 											type='text'
-											required
+											required={false}
 											name={`p-${idx}`}
 											value={(item.options.text as string) || ''}
 											onChange={e =>
@@ -315,19 +333,19 @@ export const NewsCreatePage = () => {
 									{item.type === 'IMAGES' && (
 										<div className='flex flex-col gap-1'>
 											<Input
-												required
+												required={false}
 												name='images'
 												id={`content-img-` + item.id}
 												type='file'
 												accept='image/*'
 												multiple
 												onChange={e => handleContentFileChange(idx, e)}
-												placeholder='Выберите изображения...'
+												placeholder='Добавить изображения...'
 												classNames={classNames}
 											/>
 											{item.options.text && (
 												<span className='text-xs text-blue-500 ml-3 italic'>
-													Выбрано: {item.options.text}
+													Текущие файлы: {item.options.text}
 												</span>
 											)}
 										</div>
@@ -338,17 +356,17 @@ export const NewsCreatePage = () => {
 											<Input
 												id={`content-vid-` + item.id}
 												type='file'
-												required
+												required={false}
 												name='videos'
 												accept='video/*'
 												multiple
 												onChange={e => handleContentFileChange(idx, e)}
-												placeholder='Выберите видео...'
+												placeholder='Добавить видео...'
 												classNames={classNames}
 											/>
 											{item.options.text && (
 												<span className='text-xs text-blue-500 ml-3 italic'>
-													Выбрано: {item.options.text}
+													Текущие файлы: {item.options.text}
 												</span>
 											)}
 										</div>
@@ -357,18 +375,18 @@ export const NewsCreatePage = () => {
 									{item.type === 'DOCS' && (
 										<div className='flex flex-col gap-1'>
 											<Input
-												required
+												required={false}
 												name='docs'
 												id={`content-doc-` + item.id}
 												type='file'
 												multiple
 												onChange={e => handleContentFileChange(idx, e)}
-												placeholder='Выберите документы...'
+												placeholder='Добавить документы...'
 												classNames={classNames}
 											/>
 											{item.options.text && (
 												<span className='text-xs text-blue-500 ml-3 italic'>
-													Выбрано: {item.options.text}
+													Текущие файлы: {item.options.text}
 												</span>
 											)}
 										</div>
@@ -428,6 +446,7 @@ export const NewsCreatePage = () => {
 											classNames={['text-red-400 text-xs w-fit']}
 											onClick={() => handleDeleteContent(idx)}
 										/>
+
 										{editingIdx === idx && (
 											<Button
 												text='Сохранить'
@@ -483,6 +502,7 @@ export const NewsCreatePage = () => {
 							text='Добавить документы'
 							onClick={() => addingContent('DOCS')}
 						/>
+
 						<Button
 							classNames={[
 								'text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white',
@@ -516,7 +536,7 @@ export const NewsCreatePage = () => {
 						]}
 						type='Button'
 						typeForHtml='submit'
-						text={isSubmitting ? 'Создание...' : 'Создать новость'}
+						text={isSubmitting ? 'Обновление...' : 'Обновить новость'}
 						disabled={
 							isSubmitting ||
 							!(formData.title.length > 0 && formData.content.length > 0)

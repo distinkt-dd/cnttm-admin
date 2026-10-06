@@ -35,4 +35,13 @@ export class AuthApi {
 		localStorage.setItem('accessToken', authData.accessToken)
 		return response
 	}
+
+	async logout() {
+		const response = await this.apiService.post<
+			{ success: boolean },
+			undefined
+		>('/logout', undefined)
+		localStorage.removeItem('accessToken')
+		return response
+	}
 }

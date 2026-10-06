@@ -8,8 +8,6 @@ import type {
 	TAuthLoginRequest,
 } from '../types'
 
-
-
 const api = new Api(AUTH_URI)
 const authApi = new AuthApi(api)
 
@@ -26,3 +24,7 @@ export const getUser = createAsyncThunk<TAuthDataWithOutAccess>(
 		return await authApi.getUser()
 	},
 )
+
+export const logout = createAsyncThunk('auth/logout', async () => {
+	return await authApi.logout()
+})

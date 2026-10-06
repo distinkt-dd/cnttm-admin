@@ -11,15 +11,13 @@ import { formatDate } from '@shared/utils/formatDate'
 import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const FRONTEND_URL = import.meta.env.VITE_CNTTM_SITE_URL
+
 export const NewsPage = () => {
 	const navigate = useNavigate()
 	const news = useSelector(selectedNewsNews)
 	const errors = useSelector(selectedNewsErrors)
 	const dispatch = useDispatch()
-	const onChangeContent = (e: MouseEvent) => {
-		e.stopPropagation()
-		console.log('Редактирование новости...')
-	}
 
 	const onDeleteNews = async (e: MouseEvent, id: string, title: string) => {
 		e.stopPropagation()
@@ -77,25 +75,43 @@ export const NewsPage = () => {
 								<li key={item.id}>
 									<div
 										className='w-full py-4 px-6 border-2 border-blue-300 rounded-full hover:border-blue-500 transition-all flex items-center justify-between cursor-pointer'
-										onClick={() => navigate(`/news/${item.id}`)}
+										onClick={(e: MouseEvent) => {
+											e.stopPropagation()
+											navigate(`/news/update/${item.id}`)
+										}}
 									>
 										<h2 className='font-semibold text-blue-500'>
 											{item.title}
 										</h2>
 
 										<p className='font-semibold text-olive-400'>
-											{`${formatDate(item.createdAt)} ${new Date().getFullYear()} года`}
+											{`${formatDate(item.createdAt)} ${new Date(item.datePost).getFullYear()} года`}
 										</p>
 
 										<div className='flex items-center gap-4'>
 											<Button
-												text='Редактировать'
+												text='Посмотреть на сайте'
 												type='Button'
 												typeForHtml='button'
 												classNames={[
 													'text-blue-400 hover:bg-blue-400 hover:text-white',
 												]}
-												onClick={onChangeContent}
+												onClick={() => {
+													window.open(
+														`${FRONTEND_URL}/news/news_page?id=${item.id}`,
+														'_blank',
+														'noopener,noreferrer',
+													)
+												}}
+											/>
+											<Button
+												text='Редактировать'
+												type='Button'
+												typeForHtml='button'
+												classNames={[
+													'border-green-400 text-green-400 hover:bg-green-400 hover:text-white',
+												]}
+												onClick={() => navigate(`/news/update/${item.id}`)}
 											/>
 											<Button
 												text='Удалить'

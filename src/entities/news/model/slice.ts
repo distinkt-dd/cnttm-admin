@@ -1,7 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { LIMIT_NEWS } from '@shared/api/constants'
 import type { TNews } from '../types'
-import { deleteThunk, getOfPagination } from './actions'
+import {
+	create,
+	deleteThunk,
+	getNewsById,
+	getOfPagination,
+	uploadFiles,
+} from './actions'
 
 type TInitialStateNewsSlice = {
 	news: TNews[] | null
@@ -12,10 +18,12 @@ type TInitialStateNewsSlice = {
 	total: number | null
 	isResponse: boolean
 	error: string
+	currentNews: TNews | null
 }
 
 const initialState: TInitialStateNewsSlice = {
 	news: null,
+	currentNews: null,
 	newNews: null,
 	limit: LIMIT_NEWS,
 	page: 1,
@@ -44,9 +52,42 @@ export const newsSlice = createSlice({
 		selectedNewsTotal: state => state.total,
 		selectedNewsIsResponse: state => state.isResponse,
 		selectedNewsErrors: state => state.error,
+		selectedNewsCurrent: state => state.currentNews,
 	},
 	extraReducers: builder => {
 		builder
+			.addCase(create.fulfilled, (state, action) => {
+				state.error = ''
+				state.isResponse = false
+				state.news?.push(action.payload.data)
+				state.total = state.news?.length as number
+				state.totalPages = Math.ceil(state.total / state.limit)
+			})
+			.addCase(create.rejected, (state, action) => {
+				state.error = action.error.message as string
+				state.isResponse = false
+			})
+			.addCase(create.pending, state => {
+				state.isResponse = false
+				state.error = ''
+			})
+
+			.addCase(getNewsById.fulfilled, (state, action) => {
+				state.error = ''
+				state.isResponse = false
+				state.currentNews = action.payload.data
+			})
+
+			.addCase(getNewsById.pending, state => {
+				state.error = ''
+				state.isResponse = true
+			})
+
+			.addCase(getNewsById.rejected, (state, action) => {
+				state.error = action.error.message as string
+				state.isResponse = false
+			})
+
 			.addCase(getOfPagination.fulfilled, (state, action) => {
 				state.news = action.payload.data
 				state.limit = action.payload.limit
@@ -75,6 +116,18 @@ export const newsSlice = createSlice({
 				state.isResponse = false
 				state.error = action.error.message as string
 			})
+			.addCase(uploadFiles.fulfilled, state => {
+				state.error = ''
+				state.isResponse = false
+			})
+			.addCase(uploadFiles.rejected, (state, action) => {
+				state.error = action.error.message as string
+				state.isResponse = false
+			})
+			.addCase(uploadFiles.pending, state => {
+				state.isResponse = true
+				state.error = ''
+			})
 	},
 })
 
@@ -87,6 +140,7 @@ export const {
 	selectedNewsTotal,
 	selectedNewsTotalPages,
 	selectedNewsErrors,
+	selectedNewsCurrent,
 } = newsSlice.selectors
 
 export const { setNews } = newsSlice.actions

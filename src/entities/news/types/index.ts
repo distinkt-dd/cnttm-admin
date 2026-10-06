@@ -2,11 +2,13 @@ import type { TResponseWithData } from '@shared/api'
 
 type TNewsContentOptions = {
 	text?: string
-	urls?: string
+	urls?: string[]
+	listItems?: string[]
+	url?: string
 }
 
 export type TNewsContent = {
-	type: 'PARAGRAPH' | 'IMAGES' | 'VIDEOS' | 'DOCS'
+	type: 'PARAGRAPH' | 'IMAGES' | 'VIDEOS' | 'DOCS' | 'LINKS' | 'LISTS'
 	onStep: number
 	options: TNewsContentOptions
 }
@@ -44,4 +46,5 @@ export type TNewsPaginationResponse = {
 } & TNewsPaginationInfo
 
 export type TNewsGetResponse = TResponseWithData<TNews[]>
+export type TNewsGetAlone = TResponseWithData<TNews>
 export type TNewsPostResponse = TResponseWithData<TNews>
