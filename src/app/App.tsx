@@ -1,10 +1,12 @@
 import { getUser } from '@entities/auth'
 import { getOfPagination, selectedNewsNews } from '@entities/news'
 import { Home, LoginPage, ProfilePage } from '@pages'
-import { NewsPage } from '@pages/news'
+import { NewsCreatePage, NewsPage, NewsUpdatePage } from '@pages/news'
+import { UsersCreatePage, UsersPage, UsersUpdatePage } from '@pages/users'
 import { useDispatch, useSelector } from '@shared/store'
 import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { SuperuserRoute } from './route/AdminRoute'
 import { ProtectedRoute } from './route/ProtectedRoute'
 
 export const App = () => {
@@ -13,6 +15,9 @@ export const App = () => {
 
 	useEffect(() => {
 		dispatch(getUser())
+			.unwrap()
+			.catch(() => {
+			})
 		dispatch(getOfPagination({}))
 	}, [dispatch])
 
@@ -22,7 +27,7 @@ export const App = () => {
 
 	return (
 		<Routes>
-			<Route path='/' element={<Home />}></Route>
+			<Route path='/' element={<Home />} />
 			<Route
 				path='/login'
 				element={
@@ -45,6 +50,47 @@ export const App = () => {
 					<ProtectedRoute>
 						<NewsPage />
 					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path='/news/create'
+				element={
+					<ProtectedRoute>
+						<NewsCreatePage />
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path='/news/update/:news_id'
+				element={
+					<ProtectedRoute>
+						<NewsUpdatePage />
+					</ProtectedRoute>
+				}
+			/>
+
+			<Route
+				path='/users'
+				element={
+					<SuperuserRoute>
+						<UsersPage />
+					</SuperuserRoute>
+				}
+			/>
+			<Route
+				path='/users/create'
+				element={
+					<SuperuserRoute>
+						<UsersCreatePage />
+					</SuperuserRoute>
+				}
+			/>
+			<Route
+				path='/users/update/:user_id'
+				element={
+					<SuperuserRoute>
+						<UsersUpdatePage />
+					</SuperuserRoute>
 				}
 			/>
 		</Routes>

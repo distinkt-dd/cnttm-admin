@@ -12,16 +12,16 @@ export class AuthApi {
 	}
 
 	async getUser() {
-		const token = localStorage.getItem('accessToken') as string
-		const response = await this.apiService.get<TAuthDataWithOutAccess>(
-			'/user',
-			undefined,
-			{
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			},
+		const response = await this.apiService.fetchWithRefresh(() =>
+			this.apiService.get<TAuthData | TAuthDataWithOutAccess>(
+				'/user',
+				undefined,
+			),
 		)
+		const data = response.data
+		if (data && 'accessToken' in data) {
+			localStorage.setItem('accessToken', data.accessToken)
+		}
 		return response
 	}
 
@@ -33,6 +33,15 @@ export class AuthApi {
 		const authData = response.data
 
 		localStorage.setItem('accessToken', authData.accessToken)
+		return response
+	}
+
+	async logout() {
+		const response = await this.apiService.post<
+			{ success: boolean },
+			undefined
+		>('/logout', undefined)
+		localStorage.removeItem('accessToken')
 		return response
 	}
 }

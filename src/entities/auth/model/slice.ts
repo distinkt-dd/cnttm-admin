@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { TUser } from '../types'
-import { getUser, login } from './actions'
+import { getUser, login, logout } from './actions'
 
 type TAuthInitialState = {
 	user: TUser | null
@@ -25,6 +25,12 @@ export const authSlice = createSlice({
 		},
 		setIsAuthChecked: (state, action) => {
 			state.isAuthChecked = action.payload
+		},
+		clearAll: state => {
+			state.isAuthChecked = true
+			state.isResponse = false
+			state.error = ''
+			state.user = null
 		},
 	},
 	extraReducers: builder => {
@@ -56,7 +62,23 @@ export const authSlice = createSlice({
 			.addCase(getUser.rejected, (state, action) => {
 				state.isAuthChecked = true
 				state.isResponse = false
+				state.user = null
 				state.error = action.error.message as string
+			})
+			.addCase(logout.fulfilled, state => {
+				state.user = null
+				state.error = ''
+				state.isResponse = false
+				state.isAuthChecked = true
+			})
+			.addCase(logout.rejected, (state, action) => {
+				state.user = null
+				state.error = action.error.message as string
+				state.isResponse = false
+				state.isAuthChecked = true
+			})
+			.addCase(logout.pending, state => {
+				state.isResponse = true
 			})
 	},
 	selectors: {
@@ -64,6 +86,7 @@ export const authSlice = createSlice({
 		selectedAuthError: state => state.error,
 		selectedAuthIsResponse: state => state.isResponse,
 		selectedAuthIsAuthChecked: state => state.isAuthChecked,
+		selectedIsAdmin: state => state.user?.role === 'ADMIN',
 	},
 })
 
@@ -74,4 +97,5 @@ export const {
 	selectedAuthIsAuthChecked,
 	selectedAuthIsResponse,
 	selectedAuthUser,
+	selectedIsAdmin,
 } = authSlice.selectors

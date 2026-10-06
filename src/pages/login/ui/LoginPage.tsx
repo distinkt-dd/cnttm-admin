@@ -1,7 +1,6 @@
 import {
 	login,
 	selectedAuthError,
-	selectedAuthUser,
 	type TAuthLoginRequest,
 } from '@entities/auth'
 import { UnAuthLayout } from '@pages'
@@ -17,8 +16,6 @@ const initialState: TAuthLoginRequest = {
 
 export const LoginPage = () => {
 	const dispatch = useDispatch()
-
-	const user = useSelector(selectedAuthUser)
 	const error = useSelector(selectedAuthError)
 
 	const [loginFormData, setFormData] = useState<TAuthLoginRequest>(initialState)
@@ -26,6 +23,15 @@ export const LoginPage = () => {
 	const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		dispatch(login(loginFormData))
+	}
+
+	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target
+
+		setFormData(prev => ({
+			...prev,
+			[name]: value,
+		}))
 	}
 
 	return (
@@ -42,9 +48,8 @@ export const LoginPage = () => {
 							className='flex flex-col gap-3'
 						>
 							<Input
-								onChange={(e: ChangeEvent<HTMLInputElement>) =>
-									setFormData(prev => ({ ...prev, login: e.target.value }))
-								}
+								name='login'
+								onChange={handleChange}
 								id='login'
 								type='text'
 								required
@@ -54,9 +59,8 @@ export const LoginPage = () => {
 								classNames={['px-3 py-2 border-2 rounded-full border-blue-400']}
 							/>
 							<Input
-								onChange={(e: ChangeEvent<HTMLInputElement>) =>
-									setFormData(prev => ({ ...prev, password: e.target.value }))
-								}
+								name='password'
+								onChange={handleChange}
 								id='password'
 								type='password'
 								required
@@ -67,6 +71,7 @@ export const LoginPage = () => {
 							/>
 							<Button type='Button' text='Войти' typeForHtml='submit' />
 						</form>
+						{error ? <p className='text-red-400'>{error}</p> : ''}
 					</div>
 				</div>
 			</UnAuthLayout>
